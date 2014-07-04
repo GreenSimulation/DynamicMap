@@ -4,7 +4,7 @@ using System.Collections;
 public class DynamicMap : MonoBehaviour {
 	MakeTerrain TERRAIN; //지형 클래스
 
-	private int iZoom = 14; //텍스쳐의 줌 레벨
+	private int iZoom = 13; //텍스쳐의 줌 레벨
 
 	//맵이 움직인 횟수
 	private int iMovingX = 0;
@@ -37,8 +37,10 @@ public class DynamicMap : MonoBehaviour {
 		TERRAIN.Init(this.iZoom);
 
 		//카메라 위치 초기화(맵 가운데)
-		this.camera.transform.position = new Vector3((TERRAIN.TileX / 2) * 80 * TERRAIN.Scale, 32 * TERRAIN.Scale,
-		                                             (TERRAIN.TileY / 2) * 80 * TERRAIN.Scale);
+		this.camera.transform.position = new Vector3((TERRAIN.TileX / 2) * 40 * TERRAIN.LOD * TERRAIN.Scale, 16 * TERRAIN.Scale * TERRAIN.LOD,
+		                                             (TERRAIN.TileY / 2) * 40 * TERRAIN.LOD * TERRAIN.Scale);
+
+//		System.GC.Collect();
 	}
 
 
@@ -48,12 +50,12 @@ public class DynamicMap : MonoBehaviour {
 		while(true) {
 
 			if(Input.GetKey("q")) {
-				this.camera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.Scale;
+				this.camera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.Scale * TERRAIN.LOD;
 			}
 			else if(Input.GetKey("e")) {
-				this.camera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.Scale;
+				this.camera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.Scale * TERRAIN.LOD;
 			}
-			
+
 			//		if(Input.GetKeyDown("1")) {
 			//			this.ControlTile((int) MOVING.UP);
 			//		}
@@ -69,43 +71,46 @@ public class DynamicMap : MonoBehaviour {
 			
 			//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
 			//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
-			if(this.camera.transform.position.z >= ((TERRAIN.TileY / 2 ) + 1) * 78 * TERRAIN.Scale)
+			if(this.camera.transform.position.z >= ((TERRAIN.TileY / 2 ) + 1) * 38 * TERRAIN.Scale)
 			{
 				this.camera.transform.position = new Vector3(this.camera.transform.position.x, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z - 78 * TERRAIN.Scale);
-				
-				Debug.Log("up");
+				                                             this.camera.transform.position.z - 38 * TERRAIN.Scale);
+//				Debug.Log("up");
 				
 				this.ControlTile((int) MOVING.UP);
+//				StartCoroutine(this.ControlTile((int) MOVING.UP));
 			}
 			
-			if(this.camera.transform.position.z <= ((TERRAIN.TileY / 2 ) - 1) * 78 * TERRAIN.Scale)
+			if(this.camera.transform.position.z <= ((TERRAIN.TileY / 2 ) - 1 ) * 38 * TERRAIN.Scale)
 			{
 				this.camera.transform.position = new Vector3(this.camera.transform.position.x, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z + 78 * TERRAIN.Scale);
+				                                             this.camera.transform.position.z + 38 * TERRAIN.Scale);
 				
-				Debug.Log("down");
-				
+//				Debug.Log("down");
+
+//				StartCoroutine(this.ControlTile((int) MOVING.DOWN));
 				this.ControlTile((int) MOVING.DOWN);
 			}
-			
-			if(this.camera.transform.position.x >= ((TERRAIN.TileX / 2 ) + 1) * 78 * TERRAIN.Scale)
+////			
+			if(this.camera.transform.position.x >= ((TERRAIN.TileX / 2 ) + 1) * 38 * TERRAIN.Scale)
 			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x - 78 * TERRAIN.Scale, this.camera.transform.position.y,
+				this.camera.transform.position = new Vector3(this.camera.transform.position.x - 38 * TERRAIN.Scale, this.camera.transform.position.y,
 				                                             this.camera.transform.position.z);
 				
-				Debug.Log("right");
-				
+//				Debug.Log("right");
+
+//				StartCoroutine(this.ControlTile((int) MOVING.RIGHT));
 				this.ControlTile((int) MOVING.RIGHT);
 			}
-			
-			if(this.camera.transform.position.x <= ((TERRAIN.TileX / 2 ) - 1) * 78 * TERRAIN.Scale)
+////			
+			if(this.camera.transform.position.x <= ((TERRAIN.TileX / 2 ) - 1) * 38 * TERRAIN.Scale)
 			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x + 78 * TERRAIN.Scale, this.camera.transform.position.y,
+				this.camera.transform.position = new Vector3(this.camera.transform.position.x + 38 * TERRAIN.Scale, this.camera.transform.position.y,
 				                                             this.camera.transform.position.z);
 				
-				Debug.Log("left");
-				
+//				Debug.Log("left");
+
+//				StartCoroutine(this.ControlTile((int) MOVING.LEFT));
 				this.ControlTile((int) MOVING.LEFT);
 			}
 			
@@ -123,10 +128,11 @@ public class DynamicMap : MonoBehaviour {
 		int index = 0;
 		int centerX = (int) (0.5 * TERRAIN.TileX - 2);
 		int centerY = (int) (0.5 * TERRAIN.TileY - 2);
-		int tempY = 0;
-		int tempY2 = 0;
-		int tempX = 0;
-		int tempX2 = 0;
+		int tempX = 0; int tempY = 0;
+		int tempX2 = 0; int tempY2 = 0;
+		int centerX2 = 0; int centerY2 = 0;
+		int posX = 0; int posY = 0;
+		int tempNum = 0;
 
 		switch(move)
 		{
@@ -137,16 +143,16 @@ public class DynamicMap : MonoBehaviour {
 			//인덱스의 움직임이 타일의 세로크기보다 크면 0으로 변환
 			if(this.iNumMovingUp >= TERRAIN.TileY) this.iNumMovingUp = 0;
 
-//			//자식 타일 인덱스의 예외 처리
+			//자식 타일 인덱스의 예외 처리
 //			tempY = centerY + 4 + (this.iNumMovingUp - 1);
 //			if(tempY >= TERRAIN.TileY) tempY -= TERRAIN.TileY;
-//
-//			//자식 타일 동적 생성
+
+			//자식 타일 동적 생성
 //			for(int i = 0; i < 4; ++i)
 //			{
 //				//x축 이동에 따른 인덱스 보정
-//				int centerX2 = centerX + i + this.iNumMovingRight;
-//				int posX = centerX2 - this.iNumMovingRight;
+//				centerX2 = centerX + i + this.iNumMovingRight;
+//				posX = centerX2 - this.iNumMovingRight;
 //				if(centerX2 >= TERRAIN.TileX) centerX2 -= TERRAIN.TileX;
 //
 //				//움직이는 반대방향의 자식 타일은 해제하고 움직이는 방향의 자식 타일 활성화
@@ -157,9 +163,8 @@ public class DynamicMap : MonoBehaviour {
 
 			//맵 타일 동적 생성
 			for(int x = 0; x < TERRAIN.TileX; ++x)
+//			for(int x = 0; x < 1; ++x)
 			{
-				int tempNum = 0;
-
 				//인덱스의 예외 처리(인덱스는 끝에 가서는 다시 원래되로 돌아와야 한다.) 예)0-1-2-3-0-1-2-3
 				if(this.iNumMovingUp == 0) {
 					index = this.iNumMovingRight + x + (TERRAIN.TileY - 1) * TERRAIN.TileX;
@@ -176,6 +181,8 @@ public class DynamicMap : MonoBehaviour {
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, x, tempNum);
 				TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY + TERRAIN.TileY - 1, index, x, TERRAIN.TileY);
+
+//				yield return null;
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
@@ -190,20 +197,20 @@ public class DynamicMap : MonoBehaviour {
 			//인덱스가 0보다 작으면 끝으로 이동
 			if(this.iNumMovingUp < 0) this.iNumMovingUp = TERRAIN.TileY - 1;
 
-//			//자식 타일 인덱스의 예외 처리
+			//자식 타일 인덱스의 예외 처리
 //			tempY = centerY + 4 - (TERRAIN.TileY - this.iNumMovingUp);
 //			if(tempY < 0) tempY += TERRAIN.TileY;
 //
 //			//자식 타일 인덱스의 예외 처리2
 //			tempY2 = centerY - (TERRAIN.TileY - this.iNumMovingUp);
 //			if(tempY2 < 0) tempY2 += TERRAIN.TileY;
-//
-//			//자식 타일 동적 생성
+
+			//자식 타일 동적 생성
 //			for(int i = 0; i < 4; ++i)
 //			{
 //				//x축 이동에 따른 인덱스 보정
-//				int centerX2 = centerX + i + this.iNumMovingRight;
-//				int posX = centerX2 - this.iNumMovingRight;
+//				centerX2 = centerX + i + this.iNumMovingRight;
+//				posX = centerX2 - this.iNumMovingRight;
 //				if(centerX2 >= TERRAIN.TileX) centerX2 -= TERRAIN.TileX;
 //
 //				//움직이는 반대방향의 자식 타일은 해제하고 움직이는 방향의 자식 타일 활성화
@@ -223,6 +230,8 @@ public class DynamicMap : MonoBehaviour {
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, x, this.iNumMovingUp);
 				TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY, index, x, -1);
+
+//				yield return null;
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
@@ -237,7 +246,7 @@ public class DynamicMap : MonoBehaviour {
 			//인덱스가 타일의 가로크기보다 크면 처음으로 이동
 			if(this.iNumMovingRight >= TERRAIN.TileX) this.iNumMovingRight = 0;
 
-//			//자식 타일 인덱스의 예외 처리
+			//자식 타일 인덱스의 예외 처리
 //			tempX = centerX + 4 + (this.iNumMovingRight - 1);
 //			if(tempX >= TERRAIN.TileX) tempX -= TERRAIN.TileX;
 //
@@ -245,8 +254,8 @@ public class DynamicMap : MonoBehaviour {
 //			for(int i = 0; i < 4; ++i)
 //			{
 //				//y축 이동에 따른 인덱스 보정
-//				int centerY2 = centerY + i + this.iNumMovingUp;
-//				int posY = centerY2 - this.iNumMovingUp;
+//				centerY2 = centerY + i + this.iNumMovingUp;
+//				posY = centerY2 - this.iNumMovingUp;
 //				if(centerY2 >= TERRAIN.TileY) centerY2 -= TERRAIN.TileY;
 //
 //				//움직이는 반대방향의 자식 타일은 해제하고 움직이는 방향의 자식 타일 활성화
@@ -258,8 +267,6 @@ public class DynamicMap : MonoBehaviour {
 			//맵 타일 동적 생성
 			for(int y = 0; y < TERRAIN.TileY; ++y)
 			{
-				int tempNum = 0;
-
 				//인덱스의 예외 처리(인덱스는 끝에 가서는 다시 원래되로 돌아와야 한다.) 예)0-1-2-3-0-1-2-3
 				if(this.iNumMovingRight == 0) {
 					index = (this.iNumMovingUp * TERRAIN.TileX) + y * TERRAIN.TileX + (TERRAIN.TileX - 1);
@@ -276,6 +283,8 @@ public class DynamicMap : MonoBehaviour {
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, tempNum, y);
 				TERRAIN.MakeNewField(this.iMovingX + TERRAIN.TileY - 1, this.iMovingY + y, index, TERRAIN.TileX, y);
+
+//				yield return null;
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
@@ -290,7 +299,7 @@ public class DynamicMap : MonoBehaviour {
 			//인덱스가 0보다 작으면 끝으로 이동
 			if(this.iNumMovingRight < 0) this.iNumMovingRight = TERRAIN.TileX - 1;
 
-//			//자식 타일 인덱스의 예외 처리
+			//자식 타일 인덱스의 예외 처리
 //			tempX = centerX + 4 - (TERRAIN.TileX - this.iNumMovingRight);
 //			if(tempX < 0) tempX += TERRAIN.TileX;
 //
@@ -302,8 +311,8 @@ public class DynamicMap : MonoBehaviour {
 //			for(int i = 0; i < 4; ++i)
 //			{
 //				//y축 이동에 따른 인덱스 보정
-//				int centerY2 = centerY + i + this.iNumMovingUp;
-//				int posY = centerY2 - this.iNumMovingUp;
+//				centerY2 = centerY + i + this.iNumMovingUp;
+//				posY = centerY2 - this.iNumMovingUp;
 //				if(centerY2 >= TERRAIN.TileY) centerY2 -= TERRAIN.TileY;
 //
 //				//움직이는 반대방향의 자식 타일은 해제하고 움직이는 방향의 자식 타일 활성화
@@ -324,6 +333,8 @@ public class DynamicMap : MonoBehaviour {
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, this.iNumMovingRight, y);
 				TERRAIN.MakeNewField(this.iMovingX, this.iMovingY + y, index, -1, y);
+
+//				yield return null;
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
