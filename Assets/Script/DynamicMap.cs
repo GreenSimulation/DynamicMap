@@ -14,7 +14,8 @@ public class DynamicMap : MonoBehaviour {
 	private int iNumMovingUp = 0;
 	private int iNumMovingRight = 0;
 
-	public GameObject camera; //카메라 오브젝트
+	public GameObject GOCamera; //카메라 오브젝트
+	public bool BIsMapMove = false;
 
 	enum MOVING { UP, DOWN, RIGHT, LEFT }; //맵의 움직임을 제어하는 변수
 
@@ -27,7 +28,7 @@ public class DynamicMap : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-//		this.CheckTileMoving();
+
 	}
 
 	//초기화
@@ -37,10 +38,8 @@ public class DynamicMap : MonoBehaviour {
 		TERRAIN.Init(this.iZoom);
 
 		//카메라 위치 초기화(맵 가운데)
-		this.camera.transform.position = new Vector3((TERRAIN.TileX / 2) * 40 * TERRAIN.LOD * TERRAIN.Scale, 16 * TERRAIN.Scale * TERRAIN.LOD,
-		                                             (TERRAIN.TileY / 2) * 40 * TERRAIN.LOD * TERRAIN.Scale);
-
-//		System.GC.Collect();
+		this.GOCamera.transform.position = new Vector3((TERRAIN.TileX * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.Scale, 16 * TERRAIN.Scale * TERRAIN.LOD,
+		                                             (TERRAIN.TileY * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.Scale);
 	}
 
 
@@ -50,10 +49,10 @@ public class DynamicMap : MonoBehaviour {
 		while(true) {
 
 			if(Input.GetKey("q")) {
-				this.camera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.Scale * TERRAIN.LOD;
+				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.Scale * TERRAIN.LOD;
 			}
 			else if(Input.GetKey("e")) {
-				this.camera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.Scale * TERRAIN.LOD;
+				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.Scale * TERRAIN.LOD;
 			}
 
 			//		if(Input.GetKeyDown("1")) {
@@ -68,51 +67,87 @@ public class DynamicMap : MonoBehaviour {
 			//		if(Input.GetKeyDown("4")) {
 			//			this.ControlTile((int) MOVING.LEFT);
 			//		}
-			
-			//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
-			//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
-			if(this.camera.transform.position.z >= ((TERRAIN.TileY / 2 ) + 1) * 38 * TERRAIN.Scale)
-			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z - 38 * TERRAIN.Scale);
-//				Debug.Log("up");
-				
-				this.ControlTile((int) MOVING.UP);
-//				StartCoroutine(this.ControlTile((int) MOVING.UP));
-			}
-			
-			if(this.camera.transform.position.z <= ((TERRAIN.TileY / 2 ) - 1 ) * 38 * TERRAIN.Scale)
-			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z + 38 * TERRAIN.Scale);
-				
-//				Debug.Log("down");
 
-//				StartCoroutine(this.ControlTile((int) MOVING.DOWN));
-				this.ControlTile((int) MOVING.DOWN);
-			}
-////			
-			if(this.camera.transform.position.x >= ((TERRAIN.TileX / 2 ) + 1) * 38 * TERRAIN.Scale)
-			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x - 38 * TERRAIN.Scale, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z);
+			if(this.BIsMapMove == false) {
+				//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
+				//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
+				if(this.GOCamera.transform.position.z >= ((TERRAIN.TileY * 0.5) + 1) * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("up");
+					
+					this.ControlTile((int) MOVING.UP);
+					
+					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
+					                                               this.GOCamera.transform.position.z - (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD);
+				}
 				
-//				Debug.Log("right");
-
-//				StartCoroutine(this.ControlTile((int) MOVING.RIGHT));
-				this.ControlTile((int) MOVING.RIGHT);
+				if(this.GOCamera.transform.position.z <= ((TERRAIN.TileY * 0.5) - 1) * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("down");
+					
+					this.ControlTile((int) MOVING.DOWN);
+					
+					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
+					                                               this.GOCamera.transform.position.z + (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD);
+				}
+				////			
+				if(this.GOCamera.transform.position.x >= ((TERRAIN.TileX * 0.5) + 1) * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("right");
+					
+					this.ControlTile((int) MOVING.RIGHT);
+					
+					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x - (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD,
+					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
+				}
+				////			
+				if(this.GOCamera.transform.position.x <= ((TERRAIN.TileX * 0.5) - 1) * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("left");
+					
+					this.ControlTile((int) MOVING.LEFT);
+					
+					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x + (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD,
+					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
+				}
 			}
-////			
-			if(this.camera.transform.position.x <= ((TERRAIN.TileX / 2 ) - 1) * 38 * TERRAIN.Scale)
-			{
-				this.camera.transform.position = new Vector3(this.camera.transform.position.x + 38 * TERRAIN.Scale, this.camera.transform.position.y,
-				                                             this.camera.transform.position.z);
+			else {
+				//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
+				//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
+				if(this.GOCamera.transform.position.z >= ((TERRAIN.TileY * 0.5f) + 1 + this.iMovingY) 
+				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("up");
+					
+					this.ControlTile((int) MOVING.UP);
+				}
 				
-//				Debug.Log("left");
-
-//				StartCoroutine(this.ControlTile((int) MOVING.LEFT));
-				this.ControlTile((int) MOVING.LEFT);
+				if(this.GOCamera.transform.position.z <= ((TERRAIN.TileY * 0.5f) - 1 + this.iMovingY) 
+				   * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("down");
+					
+					this.ControlTile((int) MOVING.DOWN);
+				}
+				////			
+				if(this.GOCamera.transform.position.x >= ((TERRAIN.TileX * 0.5f) + 1 + this.iMovingX) 
+				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("right");
+					
+					this.ControlTile((int) MOVING.RIGHT);
+				}
+				////			
+				if(this.GOCamera.transform.position.x <= ((TERRAIN.TileX * 0.5f) - 1 + this.iMovingX)
+				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				{
+					//				Debug.Log("left");
+					
+					this.ControlTile((int) MOVING.LEFT);
+				}
 			}
+
+
 			
 			yield return null;
 		}
@@ -126,13 +161,13 @@ public class DynamicMap : MonoBehaviour {
 		Resources.UnloadUnusedAssets();
 
 		int index = 0;
-		int centerX = (int) (0.5 * TERRAIN.TileX - 2);
-		int centerY = (int) (0.5 * TERRAIN.TileY - 2);
-		int tempX = 0; int tempY = 0;
-		int tempX2 = 0; int tempY2 = 0;
-		int centerX2 = 0; int centerY2 = 0;
-		int posX = 0; int posY = 0;
-		int tempNum = 0;
+//		int centerX = (int) (0.5 * TERRAIN.TileX - 2);
+//		int centerY = (int) (0.5 * TERRAIN.TileY - 2);
+//		int tempX = 0; int tempY = 0;
+//		int tempX2 = 0; int tempY2 = 0;
+//		int centerX2 = 0; int centerY2 = 0;
+//		int posX = 0; int posY = 0;
+//		int tempNum = 0;
 
 		switch(move)
 		{
@@ -168,11 +203,11 @@ public class DynamicMap : MonoBehaviour {
 				//인덱스의 예외 처리(인덱스는 끝에 가서는 다시 원래되로 돌아와야 한다.) 예)0-1-2-3-0-1-2-3
 				if(this.iNumMovingUp == 0) {
 					index = this.iNumMovingRight + x + (TERRAIN.TileY - 1) * TERRAIN.TileX;
-					tempNum = (TERRAIN.TileY - 1);
+//					tempNum = (TERRAIN.TileY - 1);
 				}
 				else {
 					index = this.iNumMovingRight + x + (this.iNumMovingUp - 1) * TERRAIN.TileX;
-					tempNum = this.iNumMovingUp - 1;
+//					tempNum = this.iNumMovingUp - 1;
 				}
 
 				if(x >= TERRAIN.TileX - this.iNumMovingRight) index -= TERRAIN.TileX;
@@ -180,13 +215,18 @@ public class DynamicMap : MonoBehaviour {
 				//움직이는 반대 방향의 타일은 제거하고, 움직이는 방향의 타일을 생성
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, x, tempNum);
-				TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY + TERRAIN.TileY - 1, index, x, TERRAIN.TileY);
+				if(this.BIsMapMove == false) {
+					TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY + TERRAIN.TileY - 1, index, x, TERRAIN.TileY);
+				}
+				else {
+					TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY + TERRAIN.TileY - 1, index, 
+					                     x + this.iMovingX, TERRAIN.TileY + this.iMovingY - 1);
+				}
 
-//				yield return null;
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
-			TERRAIN.MovingTerrain(0, 1);
+			if(this.BIsMapMove == false) TERRAIN.MovingTerrain(0, 1);
 			
 			break;
 
@@ -229,13 +269,17 @@ public class DynamicMap : MonoBehaviour {
 				//움직이는 반대 방향의 타일은 제거하고, 움직이는 방향의 타일을 생성
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, x, this.iNumMovingUp);
-				TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY, index, x, -1);
 
-//				yield return null;
+				if(this.BIsMapMove == false) {
+					TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY, index, x, -1);
+				}
+				else {
+					TERRAIN.MakeNewField(this.iMovingX + x, this.iMovingY, index, x + this.iMovingX, this.iMovingY);
+				}
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
-			TERRAIN.MovingTerrain(0, -1);
+			if(this.BIsMapMove == false) TERRAIN.MovingTerrain(0, -1);
 			
 			break;
 
@@ -270,11 +314,11 @@ public class DynamicMap : MonoBehaviour {
 				//인덱스의 예외 처리(인덱스는 끝에 가서는 다시 원래되로 돌아와야 한다.) 예)0-1-2-3-0-1-2-3
 				if(this.iNumMovingRight == 0) {
 					index = (this.iNumMovingUp * TERRAIN.TileX) + y * TERRAIN.TileX + (TERRAIN.TileX - 1);
-					tempNum = (TERRAIN.TileX - 1);
+//					tempNum = (TERRAIN.TileX - 1);
 				}
 				else {
 					index = (this.iNumMovingUp * TERRAIN.TileX) + y * TERRAIN.TileX + (this.iNumMovingRight - 1);
-					tempNum = this.iNumMovingRight - 1;
+//					tempNum = this.iNumMovingRight - 1;
 				}
 
 				if(y >= TERRAIN.TileY - this.iNumMovingUp) index -= TERRAIN.TileX * TERRAIN.TileY;
@@ -282,13 +326,17 @@ public class DynamicMap : MonoBehaviour {
 				//움직이는 반대 방향의 타일은 제거하고, 움직이는 방향의 타일을 생성
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, tempNum, y);
-				TERRAIN.MakeNewField(this.iMovingX + TERRAIN.TileY - 1, this.iMovingY + y, index, TERRAIN.TileX, y);
-
-//				yield return null;
+				if(this.BIsMapMove == false) {
+					TERRAIN.MakeNewField(this.iMovingX + TERRAIN.TileY - 1, this.iMovingY + y, index, TERRAIN.TileX, y);
+				}
+				else {
+					TERRAIN.MakeNewField(this.iMovingX + TERRAIN.TileY - 1, this.iMovingY + y, index, 
+					                     TERRAIN.TileX + this.iMovingX - 1, y + this.iMovingY);
+				}
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
-			TERRAIN.MovingTerrain(1, 0);
+			if(this.BIsMapMove == false) TERRAIN.MovingTerrain(1, 0);
 			
 			break;
 
@@ -332,13 +380,16 @@ public class DynamicMap : MonoBehaviour {
 				//움직이는 반대 방향의 타일은 제거하고, 움직이는 방향의 타일을 생성
 				TERRAIN.DestroyTile(index);
 //				TERRAIN.MakeNewTile(index, this.iNumMovingRight, y);
-				TERRAIN.MakeNewField(this.iMovingX, this.iMovingY + y, index, -1, y);
-
-//				yield return null;
+				if(this.BIsMapMove == false) {
+					TERRAIN.MakeNewField(this.iMovingX, this.iMovingY + y, index, -1, y);
+				}
+				else {
+					TERRAIN.MakeNewField(this.iMovingX, this.iMovingY + y, index, this.iMovingX, y + this.iMovingY);
+				}
 			}
 
 			//전체 타일을 움직이는 방향의 반대방향으로 이동 -> 타일의 위치는 제자리
-			TERRAIN.MovingTerrain(-1, 0);
+			if(this.BIsMapMove == false) TERRAIN.MovingTerrain(-1, 0);
 			
 			break;
 		}

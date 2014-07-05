@@ -10,9 +10,6 @@ public class DownloadTexture : MonoBehaviour {
 
 	public string strTexturePath = null;
 
-
-
-
 	// Use this for initialization
 	void Start () {
 	
