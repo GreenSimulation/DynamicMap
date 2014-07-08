@@ -3,6 +3,7 @@ using System.Collections;
 
 public class DynamicMap : MonoBehaviour {
 	MakeTerrain TERRAIN; //지형 클래스
+	FlightCamera FCAMERA;
 
 	private int iZoom = 13; //텍스쳐의 줌 레벨
 
@@ -15,44 +16,52 @@ public class DynamicMap : MonoBehaviour {
 	private int iNumMovingRight = 0;
 
 	public GameObject GOCamera; //카메라 오브젝트
-	public bool BIsMapMove = false;
+	private bool BIsMapMove = true;
+
+	private Vector3 Vec3CharacterPos;
 
 	enum MOVING { UP, DOWN, RIGHT, LEFT }; //맵의 움직임을 제어하는 변수
 
 	// Use this for initialization
 	void Start () {
 		this.Init();	
-
-		StartCoroutine(this.CheckTileMoving());
 	}
 	
 	// Update is called once per frame
 	void Update () {
-
+		this.CheckTileMoving();
 	}
 
 	//초기화
 	void Init() {
 		//지형 클래스 초기화
 		TERRAIN = this.gameObject.GetComponent<MakeTerrain>();
-		TERRAIN.Init(this.iZoom);
+		FCAMERA = this.GOCamera.GetComponent<FlightCamera>();
+
+		this.Vec3CharacterPos = this.GOCamera.transform.position;
+
+		TERRAIN.Init(this.iZoom, this.Vec3CharacterPos);
 
 		//카메라 위치 초기화(맵 가운데)
-		this.GOCamera.transform.position = new Vector3((TERRAIN.TileX * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.Scale, 16 * TERRAIN.Scale * TERRAIN.LOD,
-		                                             (TERRAIN.TileY * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.Scale);
+//		this.GOCamera.transform.position = new Vector3((TERRAIN.TileX * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.ScaleX, 16 * TERRAIN.ScaleX * TERRAIN.LOD,
+//		                                             (TERRAIN.TileY * 0.5f) * 40 * TERRAIN.LOD * TERRAIN.ScaleX);
+//		this.GOCamera.transform.position = new Vector3(TERRAIN.StartX + TERRAIN.TileX * 0.5f * TERRAIN.ScaleX * (TERRAIN.SizeX - 2),
+//		                                               16 * TERRAIN.ScaleX * TERRAIN.LOD,
+//		                                               TERRAIN.StartY + TERRAIN.TileY * 0.5f * TERRAIN.ScaleX * (TERRAIN.SizeY - 2));
 	}
 
 
 	//카메라의 위치에 따라 맵의 이동 방향을 결정하는 함수
-	IEnumerator CheckTileMoving()
+	void CheckTileMoving()
 	{
-		while(true) {
+//		while(true) {
+			this.Vec3CharacterPos = this.GOCamera.transform.position;
 
 			if(Input.GetKey("q")) {
-				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.Scale * TERRAIN.LOD;
+				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed += 50 * TERRAIN.ScaleX * TERRAIN.LOD;
 			}
 			else if(Input.GetKey("e")) {
-				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.Scale * TERRAIN.LOD;
+				this.GOCamera.GetComponent<FlightCamera>().m_fSpeed -= 50 * TERRAIN.ScaleX * TERRAIN.LOD;
 			}
 
 			//		if(Input.GetKeyDown("1")) {
@@ -71,86 +80,82 @@ public class DynamicMap : MonoBehaviour {
 			if(this.BIsMapMove == false) {
 				//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
 				//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
-				if(this.GOCamera.transform.position.z >= ((TERRAIN.TileY * 0.5) + 1) * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
-				{
-					//				Debug.Log("up");
-					
-					this.ControlTile((int) MOVING.UP);
-					
-					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
-					                                               this.GOCamera.transform.position.z - (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD);
-				}
-				
-				if(this.GOCamera.transform.position.z <= ((TERRAIN.TileY * 0.5) - 1) * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
-				{
-					//				Debug.Log("down");
-					
-					this.ControlTile((int) MOVING.DOWN);
-					
-					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
-					                                               this.GOCamera.transform.position.z + (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD);
-				}
-				////			
-				if(this.GOCamera.transform.position.x >= ((TERRAIN.TileX * 0.5) + 1) * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
-				{
-					//				Debug.Log("right");
-					
-					this.ControlTile((int) MOVING.RIGHT);
-					
-					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x - (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD,
-					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
-				}
-				////			
-				if(this.GOCamera.transform.position.x <= ((TERRAIN.TileX * 0.5) - 1) * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
-				{
-					//				Debug.Log("left");
-					
-					this.ControlTile((int) MOVING.LEFT);
-					
-					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x + (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD,
-					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
-				}
+//				if(this.Vec3CharacterPos.z >= TERRAIN.StartY + ((TERRAIN.TileY * 0.5) + 1) * (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
+//				{
+//					//				Debug.Log("up");
+//					
+//					this.ControlTile((int) MOVING.UP);
+//					
+//					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
+//					                                               this.GOCamera.transform.position.z - (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD);
+//				}
+//				
+//				if(this.GOCamera.transform.position.z <= ((TERRAIN.TileY * 0.5) - 1) * (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
+//				{
+//					//				Debug.Log("down");
+//					
+//					this.ControlTile((int) MOVING.DOWN);
+//					
+//					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x, this.GOCamera.transform.position.y,
+//					                                               this.GOCamera.transform.position.z + (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD);
+//				}
+//				////			
+//				if(this.GOCamera.transform.position.x >= ((TERRAIN.TileX * 0.5) + 1) * (TERRAIN.SizeX - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
+//				{
+//					//				Debug.Log("right");
+//					
+//					this.ControlTile((int) MOVING.RIGHT);
+//					
+//					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x - (TERRAIN.SizeX - 2) * TERRAIN.ScaleX * TERRAIN.LOD,
+//					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
+//				}
+//				////			
+//				if(this.GOCamera.transform.position.x <= ((TERRAIN.TileX * 0.5) - 1) * (TERRAIN.SizeX - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
+//				{
+//					//				Debug.Log("left");
+//					
+//					this.ControlTile((int) MOVING.LEFT);
+//					
+//					this.GOCamera.transform.position = new Vector3(this.GOCamera.transform.position.x + (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD,
+//					                                               this.GOCamera.transform.position.y, this.GOCamera.transform.position.z);
+//				}
 			}
 			else {
 				//카메라의 위치를 체크해서 일정 이상 위치에 다다르면 맵을 움직이고, 카메라 역시 그만큼 이동
 				//동시에 이동하기 때문에 실제로는 계속 가는 것으로 보임
-				if(this.GOCamera.transform.position.z >= ((TERRAIN.TileY * 0.5f) + 1 + this.iMovingY) 
-				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				if(this.Vec3CharacterPos.z >= TERRAIN.StartY + ((TERRAIN.TileY * 0.5f) + 1 + this.iMovingY) 
+				   * (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
 				{
-					//				Debug.Log("up");
+//									Debug.Log("up");
 					
 					this.ControlTile((int) MOVING.UP);
 				}
 				
-				if(this.GOCamera.transform.position.z <= ((TERRAIN.TileY * 0.5f) - 1 + this.iMovingY) 
-				   * (TERRAIN.SizeY - 2) * TERRAIN.Scale * TERRAIN.LOD)
+				if(this.Vec3CharacterPos.z <= TERRAIN.StartY + ((TERRAIN.TileY * 0.5f) - 1 + this.iMovingY) 
+				   * (TERRAIN.SizeY - 2) * TERRAIN.ScaleX * TERRAIN.LOD)
 				{
 					//				Debug.Log("down");
 					
 					this.ControlTile((int) MOVING.DOWN);
 				}
-				////			
-				if(this.GOCamera.transform.position.x >= ((TERRAIN.TileX * 0.5f) + 1 + this.iMovingX) 
-				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+							
+				if(this.Vec3CharacterPos.x >= TERRAIN.StartX + ((TERRAIN.TileX * 0.5f) + 1 + this.iMovingX) 
+				   * (TERRAIN.SizeX - 2) * TERRAIN.ScaleY * TERRAIN.LOD)
 				{
 					//				Debug.Log("right");
 					
 					this.ControlTile((int) MOVING.RIGHT);
 				}
-				////			
-				if(this.GOCamera.transform.position.x <= ((TERRAIN.TileX * 0.5f) - 1 + this.iMovingX)
-				   * (TERRAIN.SizeX - 2) * TERRAIN.Scale * TERRAIN.LOD)
+						
+				if(this.Vec3CharacterPos.x <= TERRAIN.StartX + ((TERRAIN.TileX * 0.5f) - 1 + this.iMovingX)
+				   * (TERRAIN.SizeX - 2) * TERRAIN.ScaleY * TERRAIN.LOD)
 				{
 					//				Debug.Log("left");
 					
 					this.ControlTile((int) MOVING.LEFT);
 				}
 			}
-
-
-			
-			yield return null;
-		}
+//		}
 	}
 
 

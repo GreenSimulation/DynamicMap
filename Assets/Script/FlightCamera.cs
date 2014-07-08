@@ -6,11 +6,12 @@ public class FlightCamera : MonoBehaviour {
 	public float m_fSpeed            = 0.0f;
 	public float m_fRotateSpeed      = 0.0f;
 	public int iLimit = 0;
+	public double[] DACharacterPosMer = new double[2];
 
 
 	// Use this for initialization
 	void Start () {
-	
+
 	}
 	
 	// Update is called once per frame

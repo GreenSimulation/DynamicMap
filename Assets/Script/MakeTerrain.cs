@@ -28,7 +28,10 @@ public class MakeTerrain : MonoBehaviour {
 	private int iTextureTileSize = 256;
 
 	private int iZoom;
-	public float fScale = 32.0f;
+	public float fMainScaleX = 1.0f;
+	public float fMainScaleY = 1.0f;
+	public float fScaleX = 32.0f;
+	public float fScaleY = 32.0f;
 	public int iTileNumX = 0;
 	public int iTileNumY = 0;
 	public int iFieldSizeX = 0;
@@ -38,6 +41,12 @@ public class MakeTerrain : MonoBehaviour {
 	private int iStartChildY = 0;
 	private int iChildOffsetX = 3;
 	private int iChildOffsetY = 3;
+
+	public float fWidth = 0.0f;
+	public float fHeight = 0.0f;
+	public double[] DaCharacterPos = new double[2];
+	private float fStartPosX;
+	private float fStartPosY;
 
 	public int iLOD = 4;
 
@@ -65,9 +74,20 @@ public class MakeTerrain : MonoBehaviour {
 		get {return this.iFieldSizeY;}
 	}
 
+	public float ScaleX {
+		get {return this.fScaleX;}
+	}
 
-	public float Scale {
-		get {return this.fScale;}
+	public float ScaleY {
+		get {return this.fScaleY;}
+	}
+
+	public float StartX {
+		get {return this.fStartPosX;}
+	}
+
+	public float StartY {
+		get {return this.fStartPosY;}
 	}
 
 	public int LOD {
@@ -86,13 +106,22 @@ public class MakeTerrain : MonoBehaviour {
 	}
 
 
-	public void Init(int zoom)
+	public void Init(int zoom, Vector3 charactorPos)
 	{
 		this.sbPath = new StringBuilder();
 		this.sbPath.Length = 0;
 		this.sbPath.AppendFormat("{0}/{1}", Application.streamingAssetsPath, this.strDEMPath);
 
 		this.iZoom = zoom;
+
+		this.ReadBTHeader(charactorPos);
+
+//		this.fStartPosX = (float) ((DaCharacterPos[0] - this.dWest) / (this.dEast - this.dWest) * this.fWidth - this.fWidth * 0.5f);
+//		this.fStartPosY = (float) ((DaCharacterPos[1] - this.dSouth) / (this.dNorth - this.dSouth) * this.fHeight - this.fHeight * 0.5f);
+
+		this.fStartPosX = charactorPos.x - (this.iTileNumX * 0.5f) * (this.iFieldSizeX -2) * this.fScaleX - 20.0f;;
+		this.fStartPosY = charactorPos.z - (this.iTileNumY * 0.5f) * (this.iFieldSizeY -2) * this.fScaleY - 35.0f;; 
+
 		this.gameField = GameObject.Find("Field");
 
 		DOWNTEXTURE = this.gameObject.GetComponent<DownloadTexture>();
@@ -102,18 +131,20 @@ public class MakeTerrain : MonoBehaviour {
 
 		this.gameTile = new GameObject[this.iTileNumX * this.iTileNumY];
 
-		this.ReadBTHeader();
 		this.MakeTile();
 		this.MakeField();
 	}
 
-	void ReadBTHeader()
+	void ReadBTHeader(Vector3 charactorPos)
 	{
-		BinaryReader br = new BinaryReader(File.Open(this.sbPath.ToString(), FileMode.Open));
+		BinaryReader br = new BinaryReader(File.Open(this.strDEMPath, FileMode.Open));
 		
 		br.BaseStream.Seek(10, SeekOrigin.Begin);
 		this.iColumn = br.ReadInt32();
 		this.iRow = br.ReadInt32();
+
+		this.fScaleX = this.fMainScaleX * this.fWidth / this.iColumn;
+		this.fScaleY = this.fMainScaleY * this.fHeight / this.iRow;
 
 		br.BaseStream.Seek(28, SeekOrigin.Begin);
 		this.dWest = br.ReadDouble();
@@ -125,7 +156,14 @@ public class MakeTerrain : MonoBehaviour {
 //		this.vecCellSize.y = 32.0f;
 		this.vecCellSize.x = 128.0f;
 		this.vecCellSize.y = 128.0f;
-		
+
+		this.DaCharacterPos[0] = ((charactorPos.x / this.fWidth + 0.5f) * (this.dEast - this.dWest) + this.dWest);
+		this.DaCharacterPos[1] = ((charactorPos.z / this.fHeight + 0.5f) * (this.dNorth - this.dSouth) + this.dSouth);
+
+//		double test = ((14360214.31233 - this.dEast) / (this.dWest - this.dEast) - 0.5f) * this.fWidth;
+//		double test = ((14360214.31233 - this.dEast) / (this.dWest - this.dEast));
+//		Debug.Log(test);	
+
 		//		this.vecLatLaong.x = 129.059989f;
 		//		this.vecLatLaong.y = 35.191264f;
 
@@ -143,19 +181,26 @@ public class MakeTerrain : MonoBehaviour {
 
 		Coordinate start_coord = Coordinate.zero;
 
-		start_coord.x = target_coord.x - ((int) (this.iTileNumX * 0.5)) * this.vecCellSize.x * (this.iFieldSizeX - 2) * this.iLOD;
-		start_coord.y = target_coord.y - ((int) (this.iTileNumY * 0.5)) * this.vecCellSize.y * (this.iFieldSizeY - 2) * this.iLOD;
+//		start_coord.x = target_coord.x - ((int) (this.iTileNumX * 0.5)) * this.vecCellSize.x * (this.iFieldSizeX - 2) * this.iLOD;
+//		start_coord.y = target_coord.y - ((int) (this.iTileNumY * 0.5)) * this.vecCellSize.y * (this.iFieldSizeY - 2) * this.iLOD;
+		start_coord.x = DaCharacterPos[0] - ((int) (this.iTileNumX * 0.5)) * this.vecCellSize.x * (this.iFieldSizeX - 2) * this.iLOD;
+		start_coord.y = DaCharacterPos[1] - ((int) (this.iTileNumY * 0.5)) * this.vecCellSize.y * (this.iFieldSizeY - 2) * this.iLOD;
 
 		this.adMercator[0] = start_coord.x;
 		this.adMercator[1] = start_coord.y;
 //		this.adMercator[0] = target_coord.x;
 //		this.adMercator[1] = target_coord.y;
 
+//		Debug.Log(this.adMercator[0]);
+
 		Coordinate texture_coord = Coordinate.zero;
 		texture_coord = coord_convert.inverse(start_coord);
 
-		this.iHeightIndexX = (int)((this.adMercator[0] - this.dWest) / this.vecCellSize.x - 17);
-		this.iHeightIndexY = (int)((this.adMercator[1] - this.dSouth) / this.vecCellSize.y - 8);
+		this.iHeightIndexX = (int)((this.adMercator[0] - this.dWest) / this.vecCellSize.x - 25);
+		this.iHeightIndexY = (int)((this.adMercator[1] - this.dSouth) / this.vecCellSize.y - 10);
+
+//		Debug.Log(this.iHeightIndexX);
+
 //		this.iHeightIndexX = (int)((this.adMercator[0] - this.dWest) / this.vecCellSize.x) - 2200;
 //		this.iHeightIndexY = (int)((this.adMercator[1] - this.dSouth) / this.vecCellSize.y) - 2300;
 
@@ -217,7 +262,7 @@ public class MakeTerrain : MonoBehaviour {
 
 	void MakeField()
 	{
-		BinaryReader br = new BinaryReader(File.Open(this.sbPath.ToString(), FileMode.Open));
+		BinaryReader br = new BinaryReader(File.Open(this.strDEMPath, FileMode.Open));
 
 //		this.iStartChildX = (int) (0.5 * this.iTileNumX - 2);
 //		this.iStartChildY = (int) (0.5 * this.iTileNumY - 2);
@@ -229,8 +274,8 @@ public class MakeTerrain : MonoBehaviour {
 //				this.iLOD = 2;
 				this.MakeMesh(br, this.iLOD * x, this.iLOD * y, x + y * this.iTileNumX, 0, (int) TILETYPE.TILE);
 
-				this.gameTile[x + y * this.iTileNumX].transform.position = new Vector3(x * (this.iFieldSizeX - 2) * this.fScale * this.iLOD, 0, 
-				                                                                       y * (this.iFieldSizeY - 2) * this.fScale * this.iLOD);
+				this.gameTile[x + y * this.iTileNumX].transform.position = new Vector3(this.fStartPosX + x * (this.iFieldSizeX - 2) * this.fScaleX * this.iLOD, 0, 
+				                                                                       this.fStartPosY + y * (this.iFieldSizeY - 2) * this.fScaleY * this.iLOD);
 
 //				if((x >= this.iStartChildX && x <= this.iStartChildX + this.iChildOffsetX) &&
 //				   (y >= this.iStartChildY && y <= this.iStartChildY + this.iChildOffsetY)){
@@ -269,7 +314,7 @@ public class MakeTerrain : MonoBehaviour {
 				br.BaseStream.Seek(gridindex, SeekOrigin.Begin);
 				
 				vertices[index].x = (float) x;
-				vertices[index].y = (float) br.ReadSingle() * (0.015f * this.fScale * this.iLOD);
+				vertices[index].y = (float) br.ReadSingle() * (0.015f * this.fScaleX * this.iLOD);
 				vertices[index].z = (float) y;
 				
 				normal[index].x = 0.0f;
@@ -304,7 +349,7 @@ public class MakeTerrain : MonoBehaviour {
 			TILE[findex].mesh.triangles = triangles;
 			TILE[findex].mesh.normals = normal;
 			
-			this.gameTile[findex].transform.localScale = new Vector3(this.iLOD * this.fScale, 1, this.iLOD * this.fScale);
+			this.gameTile[findex].transform.localScale = new Vector3(this.iLOD * this.fScaleX, 1, this.iLOD * this.fScaleY);
 		}
 		else if(type == (int) TILETYPE.CHILD) {
 			TILE[findex].CHILDMESH[childindex].Clear();
@@ -332,8 +377,8 @@ public class MakeTerrain : MonoBehaviour {
 				this.MakeMesh(br, 1 * (2 * ix + x), 1 * (2 * iy + y), ix + iy * this.iTileNumX, x + y * 2, (int) TILETYPE.CHILD);
 				
 				TILE[ix + iy * this.iTileNumX].CHILDTILE[x + y * 2].transform.position = new Vector3(
-					ix * (this.iFieldSizeX - 1) * this.fScale * 2 + x * (this.iFieldSizeX - 1) * this.fScale, 0, 
-					iy * (this.iFieldSizeY - 1) * this.fScale * 2 + y * (this.iFieldSizeY - 1) * this.fScale);
+					ix * (this.iFieldSizeX - 1) * this.fScaleX * 2 + x * (this.iFieldSizeX - 1) * this.fScaleX, 0, 
+					iy * (this.iFieldSizeY - 1) * this.fScaleY * 2 + y * (this.iFieldSizeY - 1) * this.fScaleY);
 			}
 		}
 		
@@ -356,7 +401,7 @@ public class MakeTerrain : MonoBehaviour {
 
 	public void MakeNewChildTile(int ix, int iy, int tileX, int tileY, int posX, int posY, int whereMoving)
 	{
-		BinaryReader br = new BinaryReader(File.Open(this.sbPath.ToString(), FileMode.Open));
+		BinaryReader br = new BinaryReader(File.Open(this.strDEMPath, FileMode.Open));
 
 		this.iLOD = 1;
 
@@ -370,29 +415,29 @@ public class MakeTerrain : MonoBehaviour {
 				{
 				case 0:
 					TILE[tileX + tileY * this.iTileNumX].CHILDTILE[x + y * 2].transform.position = new Vector3(
-						posX * (this.iFieldSizeX - 1) * this.fScale * 2 + x * (this.iFieldSizeX - 1) * this.fScale, 0, 
-						(this.iStartChildY + 4) * (this.iFieldSizeY - 1) * this.fScale * 2 + y * (this.iFieldSizeY - 1) * this.fScale);
+						posX * (this.iFieldSizeX - 1) * this.fScaleX * 2 + x * (this.iFieldSizeX - 1) * this.fScaleX, 0, 
+						(this.iStartChildY + 4) * (this.iFieldSizeY - 1) * this.fScaleY * 2 + y * (this.iFieldSizeY - 1) * this.fScaleY);
 
 					break;
 
 				case 1:
 					TILE[tileX + tileY * this.iTileNumX].CHILDTILE[x + y * 2].transform.position = new Vector3(
-						posX * (this.iFieldSizeX - 1) * this.fScale * 2 + x * (this.iFieldSizeX - 1) * this.fScale, 0, 
-						(this.iStartChildY - 1) * (this.iFieldSizeY - 1) * this.fScale * 2 + y * (this.iFieldSizeY - 1) * this.fScale);
+						posX * (this.iFieldSizeX - 1) * this.fScaleX * 2 + x * (this.iFieldSizeX - 1) * this.fScaleX, 0, 
+						(this.iStartChildY - 1) * (this.iFieldSizeY - 1) * this.fScaleY * 2 + y * (this.iFieldSizeY - 1) * this.fScaleY);
 					
 					break;
 
 				case 2:
 					TILE[tileX + tileY * this.iTileNumX].CHILDTILE[x + y * 2].transform.position = new Vector3(
-						(this.iStartChildX + 4) * (this.iFieldSizeX - 1) * this.fScale * 2 + x * (this.iFieldSizeX - 1) * this.fScale, 0, 
-						posY * (this.iFieldSizeY - 1) * this.fScale * 2 + y * (this.iFieldSizeY - 1) * this.fScale);
+						(this.iStartChildX + 4) * (this.iFieldSizeX - 1) * this.fScaleX * 2 + x * (this.iFieldSizeX - 1) * this.fScaleX, 0, 
+						posY * (this.iFieldSizeY - 1) * this.fScaleX * 2 + y * (this.iFieldSizeY - 1) * this.fScaleX);
 					
 					break;
 
 				case 3:
 					TILE[tileX + tileY * this.iTileNumX].CHILDTILE[x + y * 2].transform.position = new Vector3(
-						(this.iStartChildX - 1) * (this.iFieldSizeX - 1) * this.fScale * 2 + x * (this.iFieldSizeX - 1) * this.fScale, 0, 
-						posY * (this.iFieldSizeY - 1) * this.fScale * 2 + y * (this.iFieldSizeY - 1) * this.fScale);
+						(this.iStartChildX - 1) * (this.iFieldSizeX - 1) * this.fScaleX * 2 + x * (this.iFieldSizeX - 1) * this.fScaleX, 0, 
+						posY * (this.iFieldSizeY - 1) * this.fScaleY * 2 + y * (this.iFieldSizeY - 1) * this.fScaleY);
 					
 					break;
 				}
@@ -434,13 +479,13 @@ public class MakeTerrain : MonoBehaviour {
 
 	public void MakeNewField(int ix, int iy, int index, int posX, int posY)
 	{
-		BinaryReader br = new BinaryReader(File.Open(this.sbPath.ToString(), FileMode.Open));
+		BinaryReader br = new BinaryReader(File.Open(this.strDEMPath, FileMode.Open));
 		
 //		this.iLOD = 2;
 		this.ChangeHeightMap(br, this.iLOD * ix, this.iLOD * iy, index, 0, (int) TILETYPE.TILE);
 
-		this.gameTile[index].transform.position = new Vector3(posX * (this.iFieldSizeX - 2) * this.fScale * this.iLOD, 0, 
-		                                                      posY * (this.iFieldSizeY - 2) * this.fScale * this.iLOD);
+		this.gameTile[index].transform.position = new Vector3(this.fStartPosX + posX * (this.iFieldSizeX - 2) * this.fScaleX * this.iLOD, 0, 
+		                                                      this.fStartPosY + posY * (this.iFieldSizeY - 2) * this.fScaleY * this.iLOD);
 
 		br.Close();
 
@@ -472,7 +517,7 @@ public class MakeTerrain : MonoBehaviour {
 				float hY = System.BitConverter.ToSingle(bytes, y * 4);
 
 				vertices[index].x = (float) x;
-				vertices[index].y = (float) hY * (0.015f * this.fScale * this.iLOD);
+				vertices[index].y = (float) hY * (0.015f * this.fScaleX * this.iLOD);
 				vertices[index].z = (float) y;
 			}
 		}
@@ -480,7 +525,7 @@ public class MakeTerrain : MonoBehaviour {
 		TILE[findex].mesh.vertices = vertices;
 		TILE[findex].mesh.RecalculateBounds();
 
-		this.gameTile[findex].transform.localScale = new Vector3(this.iLOD * this.fScale, 1, this.iLOD * this.fScale);
+		this.gameTile[findex].transform.localScale = new Vector3(this.iLOD * this.fScaleX, 1, this.iLOD * this.fScaleY);
 	}
 
 
@@ -493,8 +538,8 @@ public class MakeTerrain : MonoBehaviour {
 				int index = x + y * this.iTileNumX;
 
 				this.gameTile[index].transform.position = new Vector3(
-					this.gameTile[index].transform.position.x - this.iLOD * this.fScale * (this.iFieldSizeY - 2) * ix, 0,
-					this.gameTile[index].transform.position.z - this.iLOD * this.fScale * (this.iFieldSizeY - 2) * iy);
+					this.gameTile[index].transform.position.x - this.iLOD * this.fScaleX * (this.iFieldSizeY - 2) * ix, 0,
+					this.gameTile[index].transform.position.z - this.iLOD * this.fScaleY * (this.iFieldSizeY - 2) * iy);
 			}
 		}
 	}

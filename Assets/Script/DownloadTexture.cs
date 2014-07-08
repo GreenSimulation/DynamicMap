@@ -44,12 +44,13 @@ public class DownloadTexture : MonoBehaviour {
 				tempy = tiley - y;
 
 				sbTexturePath.Length = 0;
-				sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.jpg", this.strTexturePath, tempx, tempy, this.iZoom);
-				string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
+				sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.png", this.strTexturePath, tempx, tempy, this.iZoom);
+//				string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
 				url.Length = 0;
 
-				if(File.Exists(strFilePath)) {
-					url.AppendFormat("file://{0}", strFilePath);
+				if(File.Exists(sbTexturePath.ToString())) {
+					url.AppendFormat("file://{0}", sbTexturePath.ToString());
+
 					StartCoroutine(this.ReadTextureFromFile(url.ToString(), tile[x + y * this.iTileNumX], 0.0f));	
 
 //					url.AppendFormat("Assets/StreamingAssets/{0}", sbTexturePath.ToString());
@@ -88,9 +89,9 @@ public class DownloadTexture : MonoBehaviour {
 
 			StringBuilder sbTexturePath = new StringBuilder();
 			sbTexturePath.Length = 0;
-			sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.jpg", this.strTexturePath, x, y, this.iZoom);
-			string filePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
-			File.WriteAllBytes(filePath, bytes);
+			sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.png", this.strTexturePath, x, y, this.iZoom);
+			//string filePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
+			File.WriteAllBytes(sbTexturePath.ToString(), bytes);
 			tempTex.mipMapBias = mipmap;
 			tempTex.wrapMode = TextureWrapMode.Clamp;
 
@@ -143,12 +144,12 @@ public class DownloadTexture : MonoBehaviour {
 				tempy = tiley - y + 1;
 				
 				sbTexturePath.Length = 0;
-				sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.jpg", this.strTexturePath, tempx, tempy, tempZoom);
-				string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
+				sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.png", this.strTexturePath, tempx, tempy, tempZoom);
+//				string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
 				url.Length = 0;
 				
-				if(File.Exists(strFilePath)) {
-					url.AppendFormat("file://{0}", strFilePath);
+				if(File.Exists(sbTexturePath.ToString())) {
+					url.AppendFormat("file://{0}", sbTexturePath.ToString());
 					StartCoroutine(this.ReadChildTextureFromFile(url.ToString(), tile, x + y * 2));		
 //					Texture2D tempTex = new Texture2D(256, 256, TextureFormat.ARGB32, true);
 //					tempTex = Resources.LoadAssetAtPath("Assets/StreamingAssets/" + sbTexturePath.ToString(), typeof(Texture2D)) as Texture2D;
@@ -197,9 +198,9 @@ public class DownloadTexture : MonoBehaviour {
 			byte[] bytes = tempTex.EncodeToJPG();	
 			StringBuilder sbTexturePath = new StringBuilder();
 			sbTexturePath.Length = 0;
-			sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.jpg", this.strTexturePath, x, y, zoom);
-			string filePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
-			File.WriteAllBytes(filePath, bytes);
+			sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.png", this.strTexturePath, x, y, zoom);
+//			string filePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
+			File.WriteAllBytes(sbTexturePath.ToString(), bytes);
 			tempTex.mipMapBias = -1.0f;
 			tempTex.wrapMode = TextureWrapMode.Clamp;
 
@@ -238,12 +239,12 @@ public class DownloadTexture : MonoBehaviour {
 		StringBuilder sbTexturePath = new StringBuilder();
 			
 		sbTexturePath.Length = 0;
-		sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.jpg", this.strTexturePath, tilex, tiley, this.iZoom);
-		string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
+		sbTexturePath.AppendFormat("{0}/x_{1}_y_{2}_z_{3}.png", this.strTexturePath, tilex, tiley, this.iZoom);
+//		string strFilePath = Path.Combine(Application.streamingAssetsPath, sbTexturePath.ToString());
 		url.Length = 0;
 				
-		if(File.Exists(strFilePath)) {
-			url.AppendFormat("file://{0}", strFilePath);
+		if(File.Exists(sbTexturePath.ToString())) {
+			url.AppendFormat("file://{0}", sbTexturePath.ToString());
 			StartCoroutine(this.ReadTextureFromFile(url.ToString(), tile, 0.0f));			
 
 		}
