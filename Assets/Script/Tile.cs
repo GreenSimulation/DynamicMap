@@ -54,26 +54,26 @@ public class Tile : MonoBehaviour {
 		this.mfTileMeshFilter = (MeshFilter) field.GetComponent("MeshFilter");
 		this.mfTileMeshFilter.mesh = this.mesh;
 
-		this.gameChildTile = new GameObject[4];
-		this.meshChildField = new Mesh[4];
-		this.mfChildMeshFilter = new MeshFilter[4];
-
-		GameObject tempField = GameObject.Instantiate(field) as GameObject;
-
-		for(int i = 0; i < 4; ++i)
-		{
-			this.gameChildTile[i] = GameObject.Instantiate(tempField) as GameObject;
-			this.gameChildTile[i].name = str + "_child_" + i;
-			this.gameChildTile[i].transform.parent = field.transform;
-			this.meshChildField[i] = Mesh.Instantiate(terrain.GetComponent<MeshFilter>().mesh) as Mesh;
-
-			this.mfChildMeshFilter[i] = (MeshFilter) this.gameChildTile[i].GetComponent("MeshFilter");
-			this.mfChildMeshFilter[i].mesh = this.meshChildField[i];
-
-			this.mfChildMeshFilter[i].renderer.enabled = false;
-		}
-
-		Destroy(tempField);
+//		this.gameChildTile = new GameObject[4];
+//		this.meshChildField = new Mesh[4];
+//		this.mfChildMeshFilter = new MeshFilter[4];
+//
+//		GameObject tempField = GameObject.Instantiate(field) as GameObject;
+//
+//		for(int i = 0; i < 4; ++i)
+//		{
+//			this.gameChildTile[i] = GameObject.Instantiate(tempField) as GameObject;
+//			this.gameChildTile[i].name = str + "_child_" + i;
+//			this.gameChildTile[i].transform.parent = field.transform;
+//			this.meshChildField[i] = Mesh.Instantiate(terrain.GetComponent<MeshFilter>().mesh) as Mesh;
+//
+//			this.mfChildMeshFilter[i] = (MeshFilter) this.gameChildTile[i].GetComponent("MeshFilter");
+//			this.mfChildMeshFilter[i].mesh = this.meshChildField[i];
+//
+//			this.mfChildMeshFilter[i].renderer.enabled = false;
+//		}
+//
+//		Destroy(tempField);
 	}
 
 }
